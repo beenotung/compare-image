@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Comparison Tool</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 30px;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 30px;
+        font-size: 2em;
+      }
+
+      .upload-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .upload-box {
+        border: 2px dashed #667eea;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        background: #f8f9ff;
+        transition: all 0.3s;
+      }
+
+      .upload-box:hover {
+        border-color: #764ba2;
+        background: #f0f2ff;
+      }
+
+      .upload-box h2 {
+        color: #667eea;
+        margin-bottom: 15px;
+        font-size: 1.2em;
+      }
+
+      input[type='file'] {
+        margin: 10px 0;
+        padding: 10px;
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+      }
+
+		.preview-section {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 20px;
+			margin-bottom: 30px;
+		}
+
+		.preview-box {
+			text-align: center;
+		}
+
+		.preview-box h3 {
+			color: #333;
+			margin-bottom: 10px;
+		}
+
+		.file-info {
+			font-size: 0.85em;
+			color: #666;
+			margin-bottom: 10px;
+			background: #f8f9fa;
+			padding: 8px;
+			border-radius: 4px;
+		}
+
+		.file-info span {
+			display: block;
+			margin: 2px 0;
+		}
+
+		.preview-img {
+			max-width: 100%;
+			max-height: 300px;
+			border: 2px solid #ddd;
+			border-radius: 8px;
+			background: #f5f5f5;
+		}
+
+		.canvas-container {
+			text-align: center;
+			margin-top: 30px;
+		}
+
+		.canvas-container h2 {
+			color: #333;
+			margin-bottom: 15px;
+		}
+
+		#comparisonCanvas {
+			max-width: 100%;
+			border: 2px solid #667eea;
+			border-radius: 8px;
+			background: #f5f5f5;
+			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+		}
+
+		.controls {
+			text-align: center;
+			margin: 20px 0;
+		}
+
+		.mode-selector {
+			display: flex;
+			gap: 10px;
+			justify-content: center;
+			margin-bottom: 20px;
+			flex-wrap: wrap;
+		}
+
+		.background-selector {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			justify-content: center;
+			margin-bottom: 15px;
+			padding: 10px;
+			background: #f8f9fa;
+			border-radius: 6px;
+			flex-wrap: wrap;
+		}
+
+		.background-selector label {
+			color: #333;
+			font-weight: 500;
+		}
+
+		.background-selector input[type="color"] {
+			width: 50px;
+			height: 40px;
+			border: 2px solid #ddd;
+			border-radius: 4px;
+			cursor: pointer;
+		}
+
+		.background-selector select {
+			padding: 8px 12px;
+			border: 2px solid #ddd;
+			border-radius: 4px;
+			font-size: 0.9em;
+			cursor: pointer;
+			background: white;
+		}
+
+		.background-selector.hidden {
+			display: none;
+		}
+
+		.alpha-options {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			justify-content: center;
+			margin-bottom: 15px;
+			padding: 10px;
+			background: #f8f9fa;
+			border-radius: 6px;
+			flex-wrap: wrap;
+		}
+
+		.alpha-options label {
+			color: #333;
+			font-weight: 500;
+		}
+
+		.alpha-options select {
+			padding: 8px 12px;
+			border: 2px solid #ddd;
+			border-radius: 4px;
+			font-size: 0.9em;
+			cursor: pointer;
+			background: white;
+		}
+
+		.alpha-options.hidden {
+			display: none;
+		}
+
+		button {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border: none;
+			padding: 12px 30px;
+			border-radius: 6px;
+			font-size: 1em;
+			cursor: pointer;
+			transition: transform 0.2s, box-shadow 0.2s;
+		}
+
+		button:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+		}
+
+		button:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+			transform: none;
+		}
+
+		button.active {
+			background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+			box-shadow: 0 3px 10px rgba(118, 75, 162, 0.5);
+		}
+
+		.info {
+			text-align: center;
+			color: #666;
+			margin-top: 15px;
+			font-size: 0.9em;
+			background: #f8f9fa;
+			padding: 15px;
+			border-radius: 8px;
+		}
+
+		.info strong {
+			color: #333;
+			font-size: 1.1em;
+		}
+
+		.stats {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 10px;
+			margin-top: 10px;
+			text-align: left;
+		}
+
+		.stat-item {
+			padding: 8px;
+			background: white;
+			border-radius: 4px;
+		}
+
+		.quality-indicator {
+			font-weight: bold;
+			margin-top: 5px;
+		}
+
+		.quality-excellent { color: #28a745; }
+		.quality-good { color: #ffc107; }
+		.quality-poor { color: #dc3545; }
+
+		.hidden {
+			display: none;
+		}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🖼️ Image Comparison Tool</h1>
+
+      <div class="upload-section">
+        <div class="upload-box">
+          <h2>Image 1</h2>
+          <input type="file" id="image1Input" accept="image/*" />
+        </div>
+        <div class="upload-box">
+          <h2>Image 2</h2>
+          <input type="file" id="image2Input" accept="image/*" />
+        </div>
+      </div>
+
+      <div class="preview-section hidden" id="previewSection">
+        <div class="preview-box">
+          <h3>Image 1</h3>
+          <div class="file-info" id="fileInfo1"></div>
+          <img id="preview1" class="preview-img" alt="Preview 1" />
+        </div>
+        <div class="preview-box">
+          <h3>Image 2</h3>
+          <div class="file-info" id="fileInfo2"></div>
+          <img id="preview2" class="preview-img" alt="Preview 2" />
+        </div>
+      </div>
+
+      <div class="controls hidden" id="controlsSection">
+        <div class="mode-selector">
+          <button id="modeBtn1" class="mode-btn active" data-mode="image1">Show Image 1</button>
+          <button id="modeBtn2" class="mode-btn" data-mode="image2">Show Image 2</button>
+          <button id="modeBtnDiff" class="mode-btn" data-mode="difference">Show Difference</button>
+          <button id="modeBtnAlpha" class="mode-btn" data-mode="alpha">Show Alpha Diff</button>
+        </div>
+        <div class="background-selector hidden" id="backgroundSelector">
+          <label for="bgColorPicker">Background Color:</label>
+          <input type="color" id="bgColorPicker" value="#ffffff">
+          <label for="diffColorMode">Difference Color:</label>
+          <select id="diffColorMode">
+            <option value="fixed">Fixed Color</option>
+            <option value="image1">Image 1 Color</option>
+            <option value="image2">Image 2 Color</option>
+          </select>
+          <label for="diffColorPicker" id="diffColorLabel">Fixed Color:</label>
+          <input type="color" id="diffColorPicker" value="#ff0000">
+        </div>
+        <div class="alpha-options hidden" id="alphaOptions">
+          <label for="diffTypeSelect">Difference Type:</label>
+          <select id="diffTypeSelect">
+            <option value="absolute">Absolute Difference</option>
+            <option value="relative">Relative Difference</option>
+          </select>
+          <label for="alphaColorMode">Overlay Color:</label>
+          <select id="alphaColorMode">
+            <option value="fixed">Fixed Color</option>
+            <option value="image1">Image 1 Color</option>
+            <option value="image2">Image 2 Color</option>
+          </select>
+          <label for="alphaColorPicker" id="alphaColorLabel">Fixed Color:</label>
+          <input type="color" id="alphaColorPicker" value="#ff0000">
+        </div>
+        <button id="compareBtn">Compare Images</button>
+      </div>
+
+      <div class="canvas-container hidden" id="canvasContainer">
+        <h2 id="canvasTitle">Image Comparison</h2>
+        <canvas id="comparisonCanvas"></canvas>
+        <div class="info" id="infoText"></div>
+      </div>
+    </div>
+
+    <script>
+      let image1 = null
+      let image2 = null
+      let file1 = null
+      let file2 = null
+      let currentMode = 'image1'
+      let comparisonData = null
+      let backgroundColor = '#ffffff' // Default white background
+      let diffType = 'absolute' // 'absolute' or 'relative'
+      let alphaOverlayColor = '#ff0000' // Default red for alpha overlay
+      let alphaColorMode = 'fixed' // 'fixed', 'image1', or 'image2' for alpha mode
+      let diffColorMode = 'fixed' // 'fixed', 'image1', or 'image2' for difference mode
+      let diffFixedColor = '#ff0000' // Default red for fixed difference color
+
+      // Initial check for files in inputs after page load
+      window.addEventListener('DOMContentLoaded', () => {
+        // Initialize color values from HTML elements (to preserve values after refresh)
+        let bgColorPicker = document.getElementById('bgColorPicker')
+        let diffColorPicker = document.getElementById('diffColorPicker')
+        let diffColorModeSelect = document.getElementById('diffColorMode')
+        let alphaColorPicker = document.getElementById('alphaColorPicker')
+        let diffTypeSelect = document.getElementById('diffTypeSelect')
+        let alphaColorModeSelect = document.getElementById('alphaColorMode')
+        
+        if (bgColorPicker) {
+          backgroundColor = bgColorPicker.value
+        }
+        if (diffColorPicker) {
+          diffFixedColor = diffColorPicker.value
+        }
+        if (diffColorModeSelect) {
+          diffColorMode = diffColorModeSelect.value
+        }
+        if (alphaColorPicker) {
+          alphaOverlayColor = alphaColorPicker.value
+        }
+        if (diffTypeSelect) {
+          diffType = diffTypeSelect.value
+        }
+        if (alphaColorModeSelect) {
+          alphaColorMode = alphaColorModeSelect.value
+        }
+        
+        checkInitialFiles()
+      })
+
+      function checkInitialFiles() {
+        let input1 = document.getElementById('image1Input')
+        let input2 = document.getElementById('image2Input')
+        
+        if (input1.files && input1.files.length > 0) {
+          handleImageUpload(input1.files[0], 1)
+        }
+        if (input2.files && input2.files.length > 0) {
+          handleImageUpload(input2.files[0], 2)
+        }
+      }
+
+      // Handle image 1 upload
+      document.getElementById('image1Input').addEventListener('change', e => {
+        handleImageUpload(e.target.files[0], 1)
+      })
+
+      // Handle image 2 upload
+      document.getElementById('image2Input').addEventListener('change', e => {
+        handleImageUpload(e.target.files[0], 2)
+      })
+
+      // Handle mode buttons
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentMode = btn.dataset.mode
+          document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'))
+          btn.classList.add('active')
+          
+          // Show/hide options based on mode
+          let bgSelector = document.getElementById('backgroundSelector')
+          let alphaOptions = document.getElementById('alphaOptions')
+          
+          if (currentMode === 'difference') {
+            bgSelector.classList.remove('hidden')
+            alphaOptions.classList.add('hidden')
+          } else if (currentMode === 'alpha') {
+            bgSelector.classList.add('hidden')
+            alphaOptions.classList.remove('hidden')
+          } else {
+            bgSelector.classList.add('hidden')
+            alphaOptions.classList.add('hidden')
+          }
+          
+          updateDisplay()
+        })
+      })
+
+      // Handle background color picker
+      document.getElementById('bgColorPicker').addEventListener('change', (e) => {
+        backgroundColor = e.target.value
+        if (currentMode === 'difference' && comparisonData) {
+          displayDifference(comparisonData)
+        }
+      })
+
+      // Handle difference color mode selector
+      document.getElementById('diffColorMode').addEventListener('change', (e) => {
+        diffColorMode = e.target.value
+        let diffColorPicker = document.getElementById('diffColorPicker')
+        let diffColorLabel = document.getElementById('diffColorLabel')
+        
+        if (diffColorMode === 'fixed') {
+          diffColorPicker.style.display = 'inline-block'
+          diffColorLabel.style.display = 'inline-block'
+        } else {
+          diffColorPicker.style.display = 'none'
+          diffColorLabel.style.display = 'none'
+        }
+        
+        if (currentMode === 'difference' && comparisonData) {
+          displayDifference(comparisonData)
+        }
+      })
+
+      // Handle difference color picker (for fixed color mode)
+      document.getElementById('diffColorPicker').addEventListener('change', (e) => {
+        diffFixedColor = e.target.value
+        if (currentMode === 'difference' && comparisonData) {
+          displayDifference(comparisonData)
+        }
+      })
+
+      // Handle alpha difference type selector
+      document.getElementById('diffTypeSelect').addEventListener('change', (e) => {
+        diffType = e.target.value
+        if (currentMode === 'alpha' && comparisonData) {
+          displayAlphaDifference(comparisonData)
+        }
+      })
+
+      // Handle alpha color mode selector
+      document.getElementById('alphaColorMode').addEventListener('change', (e) => {
+        alphaColorMode = e.target.value
+        let alphaColorPicker = document.getElementById('alphaColorPicker')
+        let alphaColorLabel = document.getElementById('alphaColorLabel')
+        
+        if (alphaColorMode === 'fixed') {
+          alphaColorPicker.style.display = 'inline-block'
+          alphaColorLabel.style.display = 'inline-block'
+        } else {
+          alphaColorPicker.style.display = 'none'
+          alphaColorLabel.style.display = 'none'
+        }
+        
+        if (currentMode === 'alpha' && comparisonData) {
+          displayAlphaDifference(comparisonData)
+        }
+      })
+
+      // Handle alpha overlay color picker (for fixed color mode)
+      document.getElementById('alphaColorPicker').addEventListener('change', (e) => {
+        alphaOverlayColor = e.target.value
+        if (currentMode === 'alpha' && comparisonData) {
+          displayAlphaDifference(comparisonData)
+        }
+      })
+
+      // Handle compare button click
+      document.getElementById('compareBtn').addEventListener('click', compareImages)
+
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes'
+        let k = 1024
+        let sizes = ['Bytes', 'KB', 'MB']
+        let i = Math.floor(Math.log(bytes) / Math.log(k))
+        return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
+      }
+
+      function getFileFormat(type) {
+        if (!type) return 'Unknown'
+        let parts = type.split('/')
+        return parts.length > 1 ? parts[1].toUpperCase() : type.toUpperCase()
+      }
+
+      function handleImageUpload(file, imageNumber) {
+        if (!file || !file.type.startsWith('image/')) {
+          alert('Please select a valid image file')
+          return
+        }
+
+        let reader = new FileReader()
+        reader.onload = e => {
+          let img = new Image()
+          img.onload = () => {
+            if (imageNumber === 1) {
+              image1 = img
+              file1 = file
+              document.getElementById('preview1').src = e.target.result
+              document.getElementById('fileInfo1').innerHTML = `
+                <span><strong>Format:</strong> ${getFileFormat(file.type)}</span>
+                <span><strong>Size:</strong> ${formatFileSize(file.size)}</span>
+                <span><strong>Dimensions:</strong> ${img.width} × ${img.height}px</span>
+              `
+            } else {
+              image2 = img
+              file2 = file
+              document.getElementById('preview2').src = e.target.result
+              document.getElementById('fileInfo2').innerHTML = `
+                <span><strong>Format:</strong> ${getFileFormat(file.type)}</span>
+                <span><strong>Size:</strong> ${formatFileSize(file.size)}</span>
+                <span><strong>Dimensions:</strong> ${img.width} × ${img.height}px</span>
+              `
+            }
+
+            // Show preview section and controls if both images are loaded
+            if (image1 && image2) {
+              document.getElementById('previewSection').classList.remove('hidden')
+              document.getElementById('controlsSection').classList.remove('hidden')
+              document.getElementById('canvasContainer').classList.remove('hidden')
+              compareImages()
+            }
+          }
+          img.src = e.target.result
+        }
+        reader.readAsDataURL(file)
+      }
+
+      function updateDisplay() {
+        if (!image1 || !image2) return
+
+        let canvas = document.getElementById('comparisonCanvas')
+        let ctx = canvas.getContext('2d')
+        let maxWidth = Math.max(image1.width, image2.width)
+        let maxHeight = Math.max(image1.height, image2.height)
+
+        canvas.width = maxWidth
+        canvas.height = maxHeight
+
+        if (currentMode === 'image1') {
+          document.getElementById('canvasTitle').textContent = 'Image 1'
+          ctx.clearRect(0, 0, maxWidth, maxHeight)
+          ctx.drawImage(image1, 0, 0, maxWidth, maxHeight)
+          updateInfo('image1')
+        } else if (currentMode === 'image2') {
+          document.getElementById('canvasTitle').textContent = 'Image 2'
+          ctx.clearRect(0, 0, maxWidth, maxHeight)
+          ctx.drawImage(image2, 0, 0, maxWidth, maxHeight)
+          updateInfo('image2')
+        } else if (currentMode === 'difference') {
+          document.getElementById('canvasTitle').textContent = 'Difference Highlight'
+          // Show background color selector
+          let bgSelector = document.getElementById('backgroundSelector')
+          bgSelector.classList.remove('hidden')
+          
+          // Sync values from selectors (to preserve values after refresh)
+          let bgColorPicker = document.getElementById('bgColorPicker')
+          let diffColorModeSelect = document.getElementById('diffColorMode')
+          let diffColorPicker = document.getElementById('diffColorPicker')
+          
+          if (bgColorPicker) {
+            backgroundColor = bgColorPicker.value
+          }
+          if (diffColorModeSelect) {
+            diffColorMode = diffColorModeSelect.value
+          }
+          if (diffColorPicker) {
+            diffFixedColor = diffColorPicker.value
+          }
+          
+          // Show/hide fixed color picker based on mode
+          let diffColorLabel = document.getElementById('diffColorLabel')
+          if (diffColorMode === 'fixed') {
+            diffColorPicker.style.display = 'inline-block'
+            diffColorLabel.style.display = 'inline-block'
+          } else {
+            diffColorPicker.style.display = 'none'
+            diffColorLabel.style.display = 'none'
+          }
+          
+          if (comparisonData) {
+            displayDifference(comparisonData)
+          } else {
+            compareImages()
+          }
+        } else if (currentMode === 'alpha') {
+          document.getElementById('canvasTitle').textContent = 'Alpha Difference (Dissimilarity)'
+          // Show alpha options
+          let alphaOptions = document.getElementById('alphaOptions')
+          alphaOptions.classList.remove('hidden')
+          
+          // Sync values from selectors (to preserve values after refresh)
+          let diffTypeSelect = document.getElementById('diffTypeSelect')
+          let alphaColorModeSelect = document.getElementById('alphaColorMode')
+          let alphaColorPicker = document.getElementById('alphaColorPicker')
+          let bgColorPicker = document.getElementById('bgColorPicker')
+          
+          if (diffTypeSelect) {
+            diffType = diffTypeSelect.value
+          }
+          if (alphaColorModeSelect) {
+            alphaColorMode = alphaColorModeSelect.value
+          }
+          if (alphaColorPicker) {
+            alphaOverlayColor = alphaColorPicker.value
+          }
+          if (bgColorPicker) {
+            backgroundColor = bgColorPicker.value
+          }
+          
+          // Show/hide fixed color picker based on mode
+          let alphaColorLabel = document.getElementById('alphaColorLabel')
+          if (alphaColorMode === 'fixed') {
+            alphaColorPicker.style.display = 'inline-block'
+            alphaColorLabel.style.display = 'inline-block'
+          } else {
+            alphaColorPicker.style.display = 'none'
+            alphaColorLabel.style.display = 'none'
+          }
+          
+          if (comparisonData) {
+            displayAlphaDifference(comparisonData)
+          } else {
+            compareImages()
+          }
+        } else {
+          // Hide all options for other modes
+          document.getElementById('backgroundSelector').classList.add('hidden')
+          document.getElementById('alphaOptions').classList.add('hidden')
+        }
+      }
+
+      function updateInfo(mode) {
+        let info = document.getElementById('infoText')
+        if (mode === 'image1' && file1) {
+          info.innerHTML = `
+            <strong>Image 1 Information</strong>
+            <div class="stats">
+              <div class="stat-item">Format: ${getFileFormat(file1.type)}</div>
+              <div class="stat-item">File Size: ${formatFileSize(file1.size)}</div>
+              <div class="stat-item">Dimensions: ${image1.width} × ${image1.height}px</div>
+              <div class="stat-item">Aspect Ratio: ${(image1.width / image1.height).toFixed(2)}</div>
+            </div>
+          `
+        } else if (mode === 'image2' && file2) {
+          info.innerHTML = `
+            <strong>Image 2 Information</strong>
+            <div class="stats">
+              <div class="stat-item">Format: ${getFileFormat(file2.type)}</div>
+              <div class="stat-item">File Size: ${formatFileSize(file2.size)}</div>
+              <div class="stat-item">Dimensions: ${image2.width} × ${image2.height}px</div>
+              <div class="stat-item">Aspect Ratio: ${(image2.width / image2.height).toFixed(2)}</div>
+            </div>
+          `
+        }
+      }
+
+      function compareImages() {
+        if (!image1 || !image2) {
+          alert('Please upload both images first')
+          return
+        }
+
+        let canvas = document.getElementById('comparisonCanvas')
+        let ctx = canvas.getContext('2d')
+
+        // Resize canvas to fit both images (use the larger dimensions)
+        let maxWidth = Math.max(image1.width, image2.width)
+        let maxHeight = Math.max(image1.height, image2.height)
+
+        canvas.width = maxWidth
+        canvas.height = maxHeight
+
+        // Create temporary canvases for image processing
+        let tempCanvas1 = document.createElement('canvas')
+        let tempCanvas2 = document.createElement('canvas')
+        tempCanvas1.width = maxWidth
+        tempCanvas1.height = maxHeight
+        tempCanvas2.width = maxWidth
+        tempCanvas2.height = maxHeight
+
+        let ctx1 = tempCanvas1.getContext('2d')
+        let ctx2 = tempCanvas2.getContext('2d')
+
+        // Draw both images to temporary canvases (scaled if needed)
+        ctx1.drawImage(image1, 0, 0, maxWidth, maxHeight)
+        ctx2.drawImage(image2, 0, 0, maxWidth, maxHeight)
+
+        // Get image data
+        let imageData1 = ctx1.getImageData(0, 0, maxWidth, maxHeight)
+        let imageData2 = ctx2.getImageData(0, 0, maxWidth, maxHeight)
+        let data1 = imageData1.data
+        let data2 = imageData2.data
+
+        // Store comparison data
+        comparisonData = {
+          maxWidth: maxWidth,
+          maxHeight: maxHeight,
+          data1: data1,
+          data2: data2
+        }
+
+        // If in difference or alpha mode, display it
+        if (currentMode === 'difference') {
+          displayDifference(comparisonData)
+        } else if (currentMode === 'alpha') {
+          displayAlphaDifference(comparisonData)
+        } else {
+          updateDisplay()
+        }
+      }
+
+      function displayDifference(compData) {
+        let canvas = document.getElementById('comparisonCanvas')
+        let ctx = canvas.getContext('2d')
+        let maxWidth = compData.maxWidth
+        let maxHeight = compData.maxHeight
+        let data1 = compData.data1
+        let data2 = compData.data2
+
+        // Parse background color (hex to RGB)
+        let bgColor = backgroundColor.replace('#', '')
+        let bgR = parseInt(bgColor.substring(0, 2), 16)
+        let bgG = parseInt(bgColor.substring(2, 4), 16)
+        let bgB = parseInt(bgColor.substring(4, 6), 16)
+
+        // Parse difference color for fixed mode
+        let diffR, diffG, diffB
+        if (diffColorMode === 'fixed') {
+          let fixedColor = diffFixedColor.replace('#', '')
+          diffR = parseInt(fixedColor.substring(0, 2), 16)
+          diffG = parseInt(fixedColor.substring(2, 4), 16)
+          diffB = parseInt(fixedColor.substring(4, 6), 16)
+        }
+
+        // Create result image data
+        let resultImageData = ctx.createImageData(maxWidth, maxHeight)
+        let resultData = resultImageData.data
+
+        let diffCount = 0
+        let totalDiff = 0
+        let threshold = 15 // Sensitivity threshold for difference detection (lower for quality comparison)
+
+        // Compare pixels
+        for (let i = 0; i < data1.length; i += 4) {
+          let r1 = data1[i]
+          let g1 = data1[i + 1]
+          let b1 = data1[i + 2]
+          let a1 = data1[i + 3]
+
+          let r2 = data2[i]
+          let g2 = data2[i + 1]
+          let b2 = data2[i + 2]
+          let a2 = data2[i + 3]
+
+          // Calculate difference using perceptual color difference
+          let diffR_val = Math.abs(r1 - r2)
+          let diffG_val = Math.abs(g1 - g2)
+          let diffB_val = Math.abs(b1 - b2)
+          let diff = diffR_val + diffG_val + diffB_val
+          totalDiff += diff
+
+          if (diff > threshold) {
+            // Highlight difference - use color based on mode
+            if (diffColorMode === 'fixed') {
+              // Use fixed color directly (no intensity adjustment)
+              resultData[i] = diffR     // R
+              resultData[i + 1] = diffG // G
+              resultData[i + 2] = diffB // B
+            } else if (diffColorMode === 'image1') {
+              // Use image 1 color directly
+              resultData[i] = r1
+              resultData[i + 1] = g1
+              resultData[i + 2] = b1
+            } else if (diffColorMode === 'image2') {
+              // Use image 2 color directly
+              resultData[i] = r2
+              resultData[i + 1] = g2
+              resultData[i + 2] = b2
+            }
+            resultData[i + 3] = 255 // A (fully opaque)
+            diffCount++
+          } else {
+            // Show background color for same pixels
+            resultData[i] = bgR
+            resultData[i + 1] = bgG
+            resultData[i + 2] = bgB
+            resultData[i + 3] = 255
+          }
+        }
+
+        // Draw result to canvas
+        ctx.putImageData(resultImageData, 0, 0)
+
+        // Calculate statistics
+        let totalPixels = maxWidth * maxHeight
+        let diffPercentage = ((diffCount / totalPixels) * 100)
+        let avgDiff = totalDiff / (totalPixels * 3) // Average difference per channel
+        let similarity = 100 - diffPercentage
+        
+        // Determine quality assessment
+        let qualityClass = 'quality-excellent'
+        let qualityText = 'Excellent'
+        if (diffPercentage > 5) {
+          qualityClass = 'quality-good'
+          qualityText = 'Good'
+        }
+        if (diffPercentage > 15) {
+          qualityClass = 'quality-poor'
+          qualityText = 'Noticeable Loss'
+        }
+
+        // Calculate size difference
+        let sizeDiff = 0
+        let sizeDiffPercent = 0
+        if (file1 && file2) {
+          sizeDiff = file2.size - file1.size
+          sizeDiffPercent = ((sizeDiff / file1.size) * 100)
+        }
+
+        // Display comparison information
+        document.getElementById('infoText').innerHTML = `
+          <strong>Quality Comparison Results</strong>
+          <div class="stats">
+            <div class="stat-item">
+              <strong>Similarity:</strong> ${similarity.toFixed(2)}%<br>
+              <span class="quality-indicator ${qualityClass}">${qualityText}</span>
+            </div>
+            <div class="stat-item">
+              <strong>Different Pixels:</strong><br>
+              ${diffCount.toLocaleString()} (${diffPercentage.toFixed(2)}%)
+            </div>
+            <div class="stat-item">
+              <strong>Avg. Pixel Difference:</strong><br>
+              ${avgDiff.toFixed(1)} per channel
+            </div>
+            <div class="stat-item">
+              <strong>Size Difference:</strong><br>
+              ${sizeDiff >= 0 ? '+' : ''}${formatFileSize(Math.abs(sizeDiff))} (${sizeDiffPercent >= 0 ? '+' : ''}${sizeDiffPercent.toFixed(1)}%)
+            </div>
+          </div>
+        `
+      }
+
+      function displayAlphaDifference(compData) {
+        let canvas = document.getElementById('comparisonCanvas')
+        let ctx = canvas.getContext('2d')
+        let maxWidth = compData.maxWidth
+        let maxHeight = compData.maxHeight
+        let data1 = compData.data1
+        let data2 = compData.data2
+
+        // Parse overlay color for fixed mode (hex to RGB)
+        let overlayR, overlayG, overlayB
+        if (alphaColorMode === 'fixed') {
+          let overlayColor = alphaOverlayColor.replace('#', '')
+          overlayR = parseInt(overlayColor.substring(0, 2), 16)
+          overlayG = parseInt(overlayColor.substring(2, 4), 16)
+          overlayB = parseInt(overlayColor.substring(4, 6), 16)
+        }
+
+        // Parse background color
+        let bgColor = backgroundColor.replace('#', '')
+        let bgR = parseInt(bgColor.substring(0, 2), 16)
+        let bgG = parseInt(bgColor.substring(2, 4), 16)
+        let bgB = parseInt(bgColor.substring(4, 6), 16)
+
+        // First draw background
+        ctx.fillStyle = backgroundColor
+        ctx.fillRect(0, 0, maxWidth, maxHeight)
+
+        // Create result image data with alpha channel
+        let resultImageData = ctx.createImageData(maxWidth, maxHeight)
+        let resultData = resultImageData.data
+
+        let maxDiff = 0 // Track maximum difference for normalization
+        let diffValues = [] // Store differences for relative calculation
+
+        // First pass: calculate differences and find max
+        for (let i = 0; i < data1.length; i += 4) {
+          let r1 = data1[i]
+          let g1 = data1[i + 1]
+          let b1 = data1[i + 2]
+
+          let r2 = data2[i]
+          let g2 = data2[i + 1]
+          let b2 = data2[i + 2]
+
+          let diffR = Math.abs(r1 - r2)
+          let diffG = Math.abs(g1 - g2)
+          let diffB = Math.abs(b1 - b2)
+          let diff = diffR + diffG + diffB
+
+          diffValues.push(diff)
+          if (diff > maxDiff) {
+            maxDiff = diff
+          }
+        }
+
+        // Second pass: render with alpha based on difference
+        let diffIndex = 0
+        for (let i = 0; i < data1.length; i += 4) {
+          let r1 = data1[i]
+          let g1 = data1[i + 1]
+          let b1 = data1[i + 2]
+          
+          let r2 = data2[i]
+          let g2 = data2[i + 1]
+          let b2 = data2[i + 2]
+
+          let diff = diffValues[diffIndex++]
+          let alpha = 0 // 0 = similar, 255 = totally different
+
+          if (diffType === 'absolute') {
+            // Absolute difference: scale by max possible difference (255*3 = 765)
+            alpha = Math.min(255, Math.floor((diff / 765) * 255))
+          } else {
+            // Relative difference: scale by actual max difference in the image
+            if (maxDiff > 0) {
+              alpha = Math.floor((diff / maxDiff) * 255)
+            } else {
+              alpha = 0
+            }
+          }
+
+          // Use color based on mode, with alpha reflecting dissimilarity
+          if (alphaColorMode === 'fixed') {
+            // Use fixed color with calculated alpha
+            resultData[i] = overlayR     // R
+            resultData[i + 1] = overlayG // G
+            resultData[i + 2] = overlayB // B
+          } else if (alphaColorMode === 'image1') {
+            // Use image 1 color with calculated alpha
+            resultData[i] = r1
+            resultData[i + 1] = g1
+            resultData[i + 2] = b1
+          } else if (alphaColorMode === 'image2') {
+            // Use image 2 color with calculated alpha
+            resultData[i] = r2
+            resultData[i + 1] = g2
+            resultData[i + 2] = b2
+          }
+          resultData[i + 3] = alpha    // A (dissimilarity: 0=similar, 255=totally different)
+        }
+
+        // Draw result to canvas
+        ctx.putImageData(resultImageData, 0, 0)
+
+        // Calculate statistics
+        let totalPixels = maxWidth * maxHeight
+        let avgAlpha = 0
+        let pixelsWithDiff = 0
+
+        for (let i = 3; i < resultData.length; i += 4) {
+          let alpha = resultData[i]
+          avgAlpha += alpha
+          if (alpha > 0) {
+            pixelsWithDiff++
+          }
+        }
+        avgAlpha = avgAlpha / totalPixels
+        let avgDissimilarity = (avgAlpha / 255) * 100
+
+        // Display comparison information
+        document.getElementById('infoText').innerHTML = `
+          <strong>Alpha Difference (Dissimilarity) Results</strong>
+          <div class="stats">
+            <div class="stat-item">
+              <strong>Average Dissimilarity:</strong><br>
+              ${avgDissimilarity.toFixed(2)}%
+            </div>
+            <div class="stat-item">
+              <strong>Pixels with Differences:</strong><br>
+              ${pixelsWithDiff.toLocaleString()} (${((pixelsWithDiff / totalPixels) * 100).toFixed(2)}%)
+            </div>
+            <div class="stat-item">
+              <strong>Difference Type:</strong><br>
+              ${diffType === 'absolute' ? 'Absolute' : 'Relative'}
+            </div>
+            <div class="stat-item">
+              <strong>Max Difference:</strong><br>
+              ${maxDiff.toFixed(0)} / 765
+            </div>
+          </div>
+          <div style="margin-top: 10px; font-size: 0.85em; color: #666;">
+            <strong>Legend:</strong> Transparent (α=0) = Similar, Opaque (α=255) = Totally Different
+          </div>
+        `
+      }
+    </script>
+  </body>
+</html>
