@@ -343,7 +343,6 @@
           <label for="alphaColorPicker" id="alphaColorLabel">Fixed Color:</label>
           <input type="color" id="alphaColorPicker" value="#ff0000">
         </div>
-        <button id="compareBtn">Compare Images</button>
       </div>
 
       <div class="canvas-container hidden" id="canvasContainer">
@@ -533,8 +532,6 @@
         }
       })
 
-      // Handle compare button click
-      document.getElementById('compareBtn').addEventListener('click', compareImages)
 
       function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes'
