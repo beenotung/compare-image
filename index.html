@@ -458,6 +458,9 @@
         if (currentMode === 'difference' && comparisonData) {
           displayDifference(comparisonData)
         }
+        if (currentMode === 'alpha' && comparisonData) {
+          displayAlphaDifference(comparisonData)
+        }
       })
 
       // Handle difference color mode selector
