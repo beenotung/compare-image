@@ -491,7 +491,10 @@
 
       // Handle threshold input
       document.getElementById('thresholdInput').addEventListener('input', (e) => {
-        differenceThreshold = parseInt(e.target.value) || 15
+        differenceThreshold = parseInt(e.target.value) || differenceThreshold
+        if (e.target.value < 1) {
+          e.target.value = differenceThreshold
+        }
         if (currentMode === 'difference' && comparisonData) {
           displayDifference(comparisonData)
         }
