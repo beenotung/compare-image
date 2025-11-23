@@ -803,10 +803,12 @@
           let a2 = data2[i + 3]
 
           // Calculate difference using perceptual color difference
+          // Accumulate ALL differences (magnitude-based), not just count pixels
           let diffR_val = Math.abs(r1 - r2)
           let diffG_val = Math.abs(g1 - g2)
           let diffB_val = Math.abs(b1 - b2)
           let diff = diffR_val + diffG_val + diffB_val
+          // Add difference magnitude for ALL pixels (even if below threshold)
           totalDiff += diff
 
           if (diff > threshold) {
@@ -845,16 +847,28 @@
         let totalPixels = maxWidth * maxHeight
         let diffPercentage = ((diffCount / totalPixels) * 100)
         let avgDiff = totalDiff / (totalPixels * 3) // Average difference per channel
-        let similarity = 100 - diffPercentage
         
-        // Determine quality assessment
+        // Calculate similarity based on pixel count (how many pixels differ)
+        let similarityByCount = 100 - diffPercentage
+        
+        // Calculate similarity based on ACTUAL DIFFERENCE MAGNITUDE (how different the pixels are)
+        // totalDiff = sum of all pixel differences (each pixel: |r1-r2| + |g1-g2| + |b1-b2|)
+        // Max possible difference per pixel: 255 (R) + 255 (G) + 255 (B) = 765
+        // Max possible total difference: totalPixels * 765
+        let maxPossibleDiff = totalPixels * 765
+        // Similarity = 100% - (actual total difference / max possible total difference) * 100%
+        // This means: large differences in few pixels = same similarity as small differences in many pixels
+        let similarityByMagnitude = 100 - ((totalDiff / maxPossibleDiff) * 100)
+        
+        // Determine quality assessment based on color magnitude similarity (not pixel count)
+        // This better reflects human perception - small differences in many pixels vs large differences in few pixels
         let qualityClass = 'quality-excellent'
         let qualityText = 'Excellent'
-        if (diffPercentage > 5) {
+        if (similarityByMagnitude < 99) {
           qualityClass = 'quality-good'
           qualityText = 'Good'
         }
-        if (diffPercentage > 15) {
+        if (similarityByMagnitude < 95) {
           qualityClass = 'quality-poor'
           qualityText = 'Noticeable Loss'
         }
@@ -872,8 +886,14 @@
           <strong>Quality Comparison Results</strong>
           <div class="stats">
             <div class="stat-item">
-              <strong>Similarity:</strong> ${similarity.toFixed(2)}%<br>
-              <span class="quality-indicator ${qualityClass}">${qualityText}</span>
+              <strong>Similarity (by Pixel Count):</strong><br>
+              ${similarityByCount.toFixed(2)}%<br>
+              <span style="font-size: 0.85em; color: #666;">Based on how many pixels differ</span>
+            </div>
+            <div class="stat-item">
+              <strong>Similarity (by Color Amount):</strong><br>
+              ${similarityByMagnitude.toFixed(2)}%<br>
+              <span style="font-size: 0.85em; color: #666;">Based on how different the colors are</span>
             </div>
             <div class="stat-item">
               <strong>Different Pixels:</strong><br>
@@ -886,6 +906,10 @@
             <div class="stat-item">
               <strong>Size Difference:</strong><br>
               ${sizeDiff >= 0 ? '+' : ''}${formatFileSize(Math.abs(sizeDiff))} (${sizeDiffPercent >= 0 ? '+' : ''}${sizeDiffPercent.toFixed(1)}%)
+            </div>
+            <div class="stat-item">
+              <strong>Quality Assessment:</strong><br>
+              <span class="quality-indicator ${qualityClass}">${qualityText}</span>
             </div>
           </div>
         `
