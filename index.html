@@ -325,6 +325,8 @@
           </select>
           <label for="diffColorPicker" id="diffColorLabel">Fixed Color:</label>
           <input type="color" id="diffColorPicker" value="#ff0000">
+          <label for="thresholdInput">Sensitivity Threshold:</label>
+          <input type="number" id="thresholdInput" min="0" max="765" value="15" style="width: 80px; padding: 6px; border: 2px solid #ddd; border-radius: 4px; font-size: 0.9em;">
         </div>
         <div class="alpha-options hidden" id="alphaOptions">
           <label for="diffTypeSelect">Difference Type:</label>
@@ -364,6 +366,7 @@
       let alphaColorMode = 'fixed' // 'fixed', 'image1', or 'image2' for alpha mode
       let diffColorMode = 'fixed' // 'fixed', 'image1', or 'image2' for difference mode
       let diffFixedColor = '#ff0000' // Default red for fixed difference color
+      let differenceThreshold = 15 // Sensitivity threshold for difference detection
 
       // Initial check for files in inputs after page load
       window.addEventListener('DOMContentLoaded', () => {
@@ -392,6 +395,10 @@
         }
         if (alphaColorModeSelect) {
           alphaColorMode = alphaColorModeSelect.value
+        }
+        let thresholdInput = document.getElementById('thresholdInput')
+        if (thresholdInput) {
+          differenceThreshold = parseInt(thresholdInput.value) || 15
         }
         
         checkInitialFiles()
@@ -475,6 +482,14 @@
       // Handle difference color picker (for fixed color mode)
       document.getElementById('diffColorPicker').addEventListener('change', (e) => {
         diffFixedColor = e.target.value
+        if (currentMode === 'difference' && comparisonData) {
+          displayDifference(comparisonData)
+        }
+      })
+
+      // Handle threshold input
+      document.getElementById('thresholdInput').addEventListener('input', (e) => {
+        differenceThreshold = parseInt(e.target.value) || 15
         if (currentMode === 'difference' && comparisonData) {
           displayDifference(comparisonData)
         }
@@ -606,6 +621,7 @@
           let bgColorPicker = document.getElementById('bgColorPicker')
           let diffColorModeSelect = document.getElementById('diffColorMode')
           let diffColorPicker = document.getElementById('diffColorPicker')
+          let thresholdInput = document.getElementById('thresholdInput')
           
           if (bgColorPicker) {
             backgroundColor = bgColorPicker.value
@@ -615,6 +631,9 @@
           }
           if (diffColorPicker) {
             diffFixedColor = diffColorPicker.value
+          }
+          if (thresholdInput) {
+            differenceThreshold = parseInt(thresholdInput.value) || 15
           }
           
           // Show/hide fixed color picker based on mode
@@ -788,7 +807,7 @@
 
         let diffCount = 0
         let totalDiff = 0
-        let threshold = 15 // Sensitivity threshold for difference detection (lower for quality comparison)
+        let threshold = differenceThreshold // Use customizable threshold from UI
 
         // Compare pixels
         for (let i = 0; i < data1.length; i += 4) {
